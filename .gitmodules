@@ -1,0 +1,4 @@
+[submodule "AthenaAgent"]
+	path = AthenaAgent
+	url = ../../AthenaAgent.git
+    branch = develop

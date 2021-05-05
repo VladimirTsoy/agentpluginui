@@ -1,0 +1,77 @@
+variables:
+  GIT_SUBMODULE_STRATEGY: normal
+
+stages:
+  - build
+
+build-linux:
+  image: gitlab.avsw.ru:56050/agents/builder/linux:latest
+  stage: build
+  before_script:
+    - git submodule update --remote
+  script:
+    - mkdir build && cd build
+    - cmake .. -DATHENA_AGENT_DIR=../AthenaAgent/src
+    - make -j5
+    - mv *.so ${CI_PROJECT_DIR}
+
+    - echo "Deploy lib from Qt"
+    - mkdir -p ${CI_PROJECT_DIR}/Qt/libs
+    - mkdir -p ${CI_PROJECT_DIR}/Qt/platforms
+
+    - ls -al /usr/local
+    - ls -al /usr/local/Qt-5.14.1
+    - ls -al /usr/local/Qt-5.14.1/lib
+
+    - cp -L /usr/local/Qt-5.14.1/lib/libQt5Core.so.5 ${CI_PROJECT_DIR}/Qt/libs/.
+    - cp -L /usr/local/Qt-5.14.1/lib/libQt5Network.so.5 ${CI_PROJECT_DIR}/Qt/libs/.
+    - cp -L /usr/local/Qt-5.14.1/lib/libQt5XcbQpa.so.5 ${CI_PROJECT_DIR}/Qt/libs/.
+    - cp -L /usr/local/Qt-5.14.1/lib/libQt5DBus.so.5 ${CI_PROJECT_DIR}/Qt/libs/.
+
+    - cp -rL /usr/local/Qt-5.14.1/plugins/platforms ${CI_PROJECT_DIR}/Qt/.
+
+    - cp -L /usr/lib/x86_64-linux-gnu/libicu* ${CI_PROJECT_DIR}/Qt/libs/.
+    - cp -L /usr/lib/x86_64-linux-gnu/libxkbcommon* ${CI_PROJECT_DIR}/Qt/libs/.
+    - cp -L /usr/lib/x86_64-linux-gnu/libpcre* ${CI_PROJECT_DIR}/Qt/libs/.
+    - cp -L /usr/lib/x86_64-linux-gnu/libdouble-conversion* ${CI_PROJECT_DIR}/Qt/libs/.
+    - cp -L /usr/lib/x86_64-linux-gnu/libxcb* ${CI_PROJECT_DIR}/Qt/libs/.
+
+  artifacts:
+    paths:
+      - ./Qt
+      - ./*.so
+
+
+build-win:
+  image: gitlab.avsw.ru:56050/agents/builder/windows:latest
+  stage: build
+  before_script:
+    - git submodule update --remote
+  script:
+    - mkdir build && cd build
+    - cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchain/x86_64-w64-mingw32.cmake -DATHENA_AGENT_DIR=../AthenaAgent/src ..
+    - make -j5
+
+    - mv *.dll ${CI_PROJECT_DIR}
+    - echo "Deploy lib from Qt"
+
+    - mkdir -p ${CI_PROJECT_DIR}/Qt/libs
+    - mkdir -p ${CI_PROJECT_DIR}/Qt/plugins
+
+    - cp /usr/x86_64-w64-mingw32/bin/Qt5Core.dll ${CI_PROJECT_DIR}/Qt/libs/.
+    - cp /usr/x86_64-w64-mingw32/bin/Qt5Network.dll ${CI_PROJECT_DIR}/Qt/libs/.
+    - cp /usr/x86_64-w64-mingw32/bin/Qt5DBus.dll ${CI_PROJECT_DIR}/Qt/libs/.
+
+    - cp -rL /usr/x86_64-w64-mingw32/plugins/platforms ${CI_PROJECT_DIR}/Qt/plugins/.
+
+    - cp /usr/x86_64-w64-mingw32/bin/*crypto*.dll ${CI_PROJECT_DIR}/Qt/libs/.
+    - cp /usr/x86_64-w64-mingw32/bin/*ssl*.dll ${CI_PROJECT_DIR}/Qt/libs/.
+    - cp /usr/lib/gcc/x86_64-w64-mingw32/8.3-posix/libgcc*.dll ${CI_PROJECT_DIR}/Qt/libs/.
+    - cp /usr/lib/gcc/x86_64-w64-mingw32/8.3-posix/libstdc*.dll ${CI_PROJECT_DIR}/Qt/libs/.
+    - cp /usr/x86_64-w64-mingw32/lib/*winpthread*.dll ${CI_PROJECT_DIR}/Qt/libs/.
+
+
+  artifacts:
+    paths:
+      - ./Qt
+      - ./*.dll

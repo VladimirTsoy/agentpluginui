@@ -1,0 +1,3 @@
+#define AgentPluginUI_VERSION_MAJOR @AgentPluginUI_VERSION_MAJOR@
+#define AgentPluginUI_VERSION_MINOR @AgentPluginUI_VERSION_MINOR@
+#define AgentPluginUI_VERSION_PATCH @AgentPluginUI_VERSION_PATCH@
